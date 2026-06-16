@@ -54,11 +54,19 @@ namespace Dsw2026Ej15.Data
             throw new NotImplementedException();
         }
 
-        async private Task<List<Speciality>?> LoadSpecialities()
+        private List<Speciality>? LoadSpecialities()
         {
-            var json = await File.ReadAllTextAsync("speciality.json");
-            var specialities = JsonSerializer.Deserialize<List<Speciality>>(json);
-            return specialities;
+            try
+            {
+                string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "specialities.json");
+                var json = File.ReadAllTextAsync(jsonPath);
+                var specialities = JsonSerializer.Deserialize<List<Speciality>>(json.Result);
+                return specialities;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
