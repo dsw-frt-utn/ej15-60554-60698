@@ -1,4 +1,4 @@
-﻿using Dsw2026Ej15.Data.Interfaces;
+﻿using Dsw2026Ej15.Domain.Interfaces;
 using Dsw2026Ej15.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -7,66 +7,61 @@ using System.Text.Json;
 
 namespace Dsw2026Ej15.Data
 {
-    public class PersistenceInMemory : IPersistence<Doctor>, IPersistence<Speciality>
+    public class PersistenceInMemory : IPersistence
     {
-        public void Add(Doctor entity)
+        List<Speciality> _specialities = [];
+        List<Doctor> _doctors = [];
+        public PersistenceInMemory()
         {
-            throw new NotImplementedException();
+            LoadSpecialities();
+        }
+       
+        public async Task<Speciality?> GetByIdSpecialityAsync(Guid id) {
+            return _specialities.SingleOrDefault(e => e.Id == id);
         }
 
-        public void Add(Speciality entity)
+        public async Task<List<Speciality>> GetByAllSpecialityAsync()
         {
-            throw new NotImplementedException();
+            return _specialities;
         }
 
-        public void Delete(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<Doctor> GetAll()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Doctor? GetById(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Update(Doctor entity)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Update(Speciality entity)
-        {
-            throw new NotImplementedException();
-        }
-
-        IEnumerable<Speciality> IPersistence<Speciality>.GetAll()
-        {
-            throw new NotImplementedException();
-        }
-
-        Speciality? IPersistence<Speciality>.GetById(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
-        private List<Speciality>? LoadSpecialities()
+        private void LoadSpecialities()
         {
             try
             {
                 string jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Sources", "specialities.json");
-                var json = File.ReadAllTextAsync(jsonPath);
-                var specialities = JsonSerializer.Deserialize<List<Speciality>>(json.Result);
-                return specialities;
+                var json = File.ReadAllText(jsonPath);
+                var specialities = JsonSerializer.Deserialize<List<Speciality>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                if (specialities != null)
+                    _specialities = specialities;
             }
-            catch
+            catch (Exception ex)
             {
-                return null;
+                Console.WriteLine($"Error al cargar especialidades: {ex.Message}");
             }
+        }
+
+        public async Task<List<Doctor>> GetByAllDoctorsAsync()
+        {
+            return _doctors;
+        }
+
+        public async Task<Doctor?> GetByIdDoctorAsync(Guid id)
+        {
+            return _doctors.SingleOrDefault(e => e.Id == id);
+        }
+
+        public void AddDoctor(Doctor doctor)
+        {
+            _doctors.Add(doctor);
+        }
+
+        public void DeleteDoctor(Doctor doctor)
+        {
+            doctor.IsActive = false;
         }
     }
 }

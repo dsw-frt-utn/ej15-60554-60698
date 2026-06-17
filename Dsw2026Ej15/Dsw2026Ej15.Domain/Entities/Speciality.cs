@@ -12,12 +12,8 @@ namespace Dsw2026Ej15.Domain.Entities
         public string? Description { get; set; }
 
         [SetsRequiredMembers]
-        public Speciality(string name, string description)
+        public Speciality(string name, string description) : base()
         {
-            if (string.IsNullOrWhiteSpace(name)) 
-                throw new ValidationException("El nombre de la especialidad es obligatorio.");
-
-
             Name = name;
             Description = description;
         }

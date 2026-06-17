@@ -1,51 +1,105 @@
-﻿using Dsw2026Ej15.Domain.Entities;
+﻿using Dsw2026Ej15.Api.Models;
+using Dsw2026Ej15.Data;
+using Dsw2026Ej15.Domain.Entities;
+using Dsw2026Ej15.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Numerics;
 
 namespace Dsw2026Ej15.Api.Controllers
 {
     [ApiController]
     [Route("api/doctors")]
-    public class DoctorsController : Controller
+    public class DoctorsController : ControllerBase
     {
+        private readonly IPersistence _persistence;
+
+        public DoctorsController(IPersistence persistence)
+        {
+            _persistence = persistence;
+        }
+
         //POST - Insertar un nuevo medico
         [HttpPost]
-        public IActionResult NewDoctor(string name, string licenseNumber, Speciality speciality)
+        async public Task<IActionResult> NewDoctor(DoctorModel.Request doctorModel)
         {
-            //Realizar logica de insercion de medico
-            //Requiere validaciones donde name y licensenumeber sean requeridos, y specialityid exista
-            //El medico se debe crear activo
-            //Exito = 201
-            //Fracaso = 400 - indicando el motivo
-            return Ok("Mensaje de exito");
+            //Validacion de nombre, licencia y especialidad
+            if (string.IsNullOrWhiteSpace(doctorModel.Name) || string.IsNullOrWhiteSpace(doctorModel.LicenseNumber))
+            {
+                return BadRequest("Name y LicenseNumber son requeridos."); //Fracaso = 400
+            }
+            
+            var _speciality = await _persistence.GetByIdSpecialityAsync(doctorModel.IdSpeciality);
+            if (_speciality == null)
+            {
+                return BadRequest("Especialidad no existente."); //Fracaso = 400
+            }
+
+            //Logica de insercion de medico, creandose activo
+            var newDoctor = new Doctor(doctorModel.Name, doctorModel.LicenseNumber, _speciality); //No pongo isActive, ya que por defecto sera true.
+            _persistence.AddDoctor(newDoctor);
+
+            return Created(); //Exito = 201
         }
 
         //GET - Obtener todos los medicos activos
         [HttpGet]
-        public IActionResult GetDoctors()
+        async public Task<IActionResult> GetDoctors()
         {
+            var _doctorsList = await _persistence.GetByAllDoctorsAsync(); //Obtiene los doctores
+            
             //Logica para obtener los doctores ACTIVOS
-            //Exito = 200 incluso si no hay medicos activos, con que devuelva la lista.
-            return Ok("Lista de doctores aqui");
+           var response = _doctorsList.Where(d => d.IsActive).Select(d => new DoctorModel.Response(
+                   d.Id,
+                   d.Name,
+                   d.LicenseNumber,
+                   d.Speciality!.Name
+           ));
+
+            return Ok(response); // Exito 200 incluso si no hay medicos activos, devuelva la lista.
         }
 
         //GET - Obtener un medico activo a partir de su id
-        [HttpGet("/{id}")]
-        public IActionResult GetDoctorById(Guid idBuscado)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetDoctorById(Guid id)
         {
+            var _doctor = await _persistence.GetByIdDoctorAsync(id);
+
+            //El médico debe existir y estar activo
+            if (_doctor == null || !_doctor.IsActive)
+            {
+                return BadRequest("El medico no existe o no esta activo");
+            }
+
             //Logica para obtener al doctor
-            return Ok("Doctor encontrado aqui");
+            var response = new
+            {
+                Id = _doctor.Id,
+                Name = _doctor.Name,
+                LicenseNumber = _doctor.LicenseNumber,
+                Speciality = _doctor.Speciality?.Name
+            };
+
+            return Ok(response);
         }
 
         //DELETE - establecer como inactivo al médico (borrado logico)
-        [HttpDelete]
-        public IActionResult DeleteDoctor(Guid idBuscado)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDoctor(Guid id)
         {
-            //Logica de borrado logico del doctor.
+            var _doctor = await _persistence.GetByIdDoctorAsync(id);
+
             //El doctor debe existir y estar activo
-            //Exito = 204 no content
-            //Fracaso = 404 Not Found si no se encuentra el médico o no está activo
-            return Ok();
+            if (_doctor == null || !_doctor.IsActive)
+            {
+                return NotFound("El medico no existe o no esta activo"); //Fracaso = 404 Not Found si no se encuentra el médico o no está activo
+            }
+
+            //Logica de borrado logico del doctor. 
+            _persistence.DeleteDoctor(_doctor);
+
+            return NoContent(); //Exito = 204 no content
         }
 
     }

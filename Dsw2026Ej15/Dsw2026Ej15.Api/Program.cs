@@ -1,5 +1,6 @@
 
 using Dsw2026Ej15.Data;
+using Dsw2026Ej15.Domain.Interfaces;
 
 namespace Dsw2026Ej15.Api
 {
@@ -16,7 +17,7 @@ namespace Dsw2026Ej15.Api
             builder.Services.AddSwaggerGen();
 
             //Persistencia en memoria
-            builder.Services.AddSingleton<PersistenceInMemory>();
+            builder.Services.AddSingleton<IPersistence, PersistenceInMemory>();
 
             var app = builder.Build();
 
