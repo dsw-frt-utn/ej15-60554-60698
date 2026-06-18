@@ -10,8 +10,12 @@ namespace Dsw2026Ej15.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
             builder.Services.AddHealthChecks();
+
 
             //Swagger para ver endpoints
             builder.Services.AddSwaggerGen();
@@ -20,16 +24,20 @@ namespace Dsw2026Ej15.Api
             builder.Services.AddSingleton<IPersistence, PersistenceInMemory>();
 
             var app = builder.Build();
-
             app.UseMiddleware<ExceptionMiddleware>();
 
             // pipeline
             if (app.Environment.IsDevelopment())
             {
+                
+
                 app.UseSwagger();
                 app.UseSwaggerUI();
-            }
 
+                
+            }
+            app.UseRouting();
+            app.UseAuthorization();
             app.MapControllers();
             app.MapHealthChecks("/health-check");
 

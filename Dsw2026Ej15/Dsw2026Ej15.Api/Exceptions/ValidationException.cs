@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 
-namespace Dsw2026Ej15.Domain.Exceptions
+namespace Dsw2026Ej15.Api.Exceptions
 {
     public class ValidationException : Exception
     {
         public ValidationException(string message) : base(message)
         {
+
         }
+    
     }
 }

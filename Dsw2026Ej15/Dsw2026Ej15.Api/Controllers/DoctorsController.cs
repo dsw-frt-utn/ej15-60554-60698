@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Numerics;
+using Dsw2026Ej15.Api.Exceptions;
 
 namespace Dsw2026Ej15.Api.Controllers
 {
@@ -22,25 +23,36 @@ namespace Dsw2026Ej15.Api.Controllers
 
         //POST - Insertar un nuevo medico
         [HttpPost]
-        async public Task<IActionResult> NewDoctor(DoctorModel.Request doctorModel)
+        async public Task<IActionResult> NewDoctor([FromBody]DoctorModel.Request doctorModel)
         {
+            if (doctorModel == null)
+            {
+                throw new ValidationException("El modelo del doctor es nulo.");
+            }
             //Validacion de nombre, licencia y especialidad
             if (string.IsNullOrWhiteSpace(doctorModel.Name) || string.IsNullOrWhiteSpace(doctorModel.LicenseNumber))
             {
-                return BadRequest("Name y LicenseNumber son requeridos."); //Fracaso = 400
+                throw new ValidationException("Name y LicenseNumber son requeridos."); //Fracaso = 400
             }
             
             var _speciality = await _persistence.GetByIdSpecialityAsync(doctorModel.IdSpeciality);
             if (_speciality == null)
             {
-                return BadRequest("Especialidad no existente."); //Fracaso = 400
+                throw new ValidationException("Especialidad no existente."); //Fracaso = 400
             }
 
             //Logica de insercion de medico, creandose activo
             var newDoctor = new Doctor(doctorModel.Name, doctorModel.LicenseNumber, _speciality); //No pongo isActive, ya que por defecto sera true.
             _persistence.AddDoctor(newDoctor);
 
-            return Created(); //Exito = 201
+            var response = new DoctorModel.Response(
+                newDoctor.Id,
+                newDoctor.Name,
+                newDoctor.LicenseNumber,
+                newDoctor.Speciality!.Name
+            );
+
+            return CreatedAtAction(nameof(GetDoctorById), new { id = newDoctor.Id }, response); //Exito = 201
         }
 
         //GET - Obtener todos los medicos activos
@@ -51,10 +63,10 @@ namespace Dsw2026Ej15.Api.Controllers
             
             //Logica para obtener los doctores ACTIVOS
            var response = _doctorsList.Where(d => d.IsActive).Select(d => new DoctorModel.Response(
-                   d.Id,
-                   d.Name,
-                   d.LicenseNumber,
-                   d.Speciality!.Name
+                d.Id,
+                d.Name,
+                d.LicenseNumber,
+                d.Speciality!.Name
            ));
 
             return Ok(response); // Exito 200 incluso si no hay medicos activos, devuelva la lista.
@@ -69,17 +81,16 @@ namespace Dsw2026Ej15.Api.Controllers
             //El médico debe existir y estar activo
             if (_doctor == null || !_doctor.IsActive)
             {
-                return BadRequest("El medico no existe o no esta activo");
+                return NotFound("El medico no existe o no esta activo");
             }
 
             //Logica para obtener al doctor
-            var response = new
-            {
-                Id = _doctor.Id,
-                Name = _doctor.Name,
-                LicenseNumber = _doctor.LicenseNumber,
-                Speciality = _doctor.Speciality?.Name
-            };
+            var response = new DoctorModel.Response(
+                   _doctor.Id,
+                   _doctor.Name,
+                   _doctor.LicenseNumber,
+                   _doctor.Speciality?.Name ?? string.Empty
+             );
 
             return Ok(response);
         }
