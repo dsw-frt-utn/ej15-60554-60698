@@ -1,5 +1,5 @@
 ﻿using Dsw2026Ej15.Api;
-using Dsw2026Ej15.Domain.Exceptions;
+using Dsw2026Ej15.Api.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
