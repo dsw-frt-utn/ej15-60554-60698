@@ -24,18 +24,16 @@ namespace Dsw2026Ej15.Api.Controllers
         //POST - Insertar un nuevo medico
         [HttpPost]
         async public Task<IActionResult> NewDoctor([FromBody]DoctorModel.Request doctorModel)
+            //La clase del 19/06/2026 el profe indico que se deben hacer asincronos los metodos de la persistencia, yo ya los tenia de esta forma, recalco por si surge el por que esta esto asi.
         {
-            if (doctorModel == null)
-            {
-                throw new ValidationException("El modelo del doctor es nulo.");
-            }
+
             //Validacion de nombre, licencia y especialidad
             if (string.IsNullOrWhiteSpace(doctorModel.Name) || string.IsNullOrWhiteSpace(doctorModel.LicenseNumber))
             {
                 throw new ValidationException("Name y LicenseNumber son requeridos."); //Fracaso = 400
             }
             
-            var _speciality = await _persistence.GetByIdSpecialityAsync(doctorModel.IdSpeciality);
+            var _speciality = await _persistence.GetByIdSpecialityAsync(doctorModel.IdSpeciality); //Obtengo la especialidad a partir del id que me llega en el request
             if (_speciality == null)
             {
                 throw new ValidationException("Especialidad no existente."); //Fracaso = 400
@@ -43,16 +41,9 @@ namespace Dsw2026Ej15.Api.Controllers
 
             //Logica de insercion de medico, creandose activo
             var newDoctor = new Doctor(doctorModel.Name, doctorModel.LicenseNumber, _speciality); //No pongo isActive, ya que por defecto sera true.
-            _persistence.AddDoctor(newDoctor);
+            await _persistence.AddDoctor(newDoctor);
 
-            var response = new DoctorModel.Response(
-                newDoctor.Id,
-                newDoctor.Name,
-                newDoctor.LicenseNumber,
-                newDoctor.Speciality!.Name
-            );
-
-            return CreatedAtAction(nameof(GetDoctorById), new { id = newDoctor.Id }, response); //Exito = 201
+            return Created(); //Exito = 201
         }
 
         //GET - Obtener todos los medicos activos
@@ -60,14 +51,16 @@ namespace Dsw2026Ej15.Api.Controllers
         async public Task<IActionResult> GetDoctors()
         {
             var _doctorsList = await _persistence.GetByAllDoctorsAsync(); //Obtiene los doctores
-            
+
+            //throw new InvalidOperationException("Prueba de error 500");
+
             //Logica para obtener los doctores ACTIVOS
-           var response = _doctorsList.Where(d => d.IsActive).Select(d => new DoctorModel.Response(
-                d.Id,
-                d.Name,
-                d.LicenseNumber,
-                d.Speciality!.Name
-           ));
+            var response = _doctorsList.Where(d => d.IsActive).Select(d => new DoctorModel.Response(
+                    d.Id, 
+                    d.Name, 
+                    d.LicenseNumber, 
+                    d.Speciality!.Name
+            )); 
 
             return Ok(response); // Exito 200 incluso si no hay medicos activos, devuelva la lista.
         }
@@ -84,13 +77,12 @@ namespace Dsw2026Ej15.Api.Controllers
                 return NotFound("El medico no existe o no esta activo");
             }
 
-            //Logica para obtener al doctor
             var response = new DoctorModel.Response(
-                   _doctor.Id,
-                   _doctor.Name,
-                   _doctor.LicenseNumber,
-                   _doctor.Speciality?.Name ?? string.Empty
-             );
+                _doctor.Id,
+                _doctor.Name,
+                _doctor.LicenseNumber,
+                _doctor.Speciality!.Name
+            );
 
             return Ok(response);
         }
@@ -108,7 +100,7 @@ namespace Dsw2026Ej15.Api.Controllers
             }
 
             //Logica de borrado logico del doctor. 
-            _persistence.DeleteDoctor(_doctor);
+            await _persistence.DeleteDoctor(_doctor);
 
             return NoContent(); //Exito = 204 no content
         }

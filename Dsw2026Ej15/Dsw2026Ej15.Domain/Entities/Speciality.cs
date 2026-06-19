@@ -7,10 +7,8 @@ namespace Dsw2026Ej15.Domain.Entities
 {
     public class Speciality : BaseEntity
     {
-        public required string Name { get; set; }
+        public string Name { get; set; }
         public string? Description { get; set; }
-
-        [SetsRequiredMembers]
         public Speciality(string name, string description) : base()
         {
             Name = name;
