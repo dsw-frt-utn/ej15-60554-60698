@@ -15,10 +15,6 @@ namespace Dsw2026Ej15.Data
         {
             LoadSpecialities();
         }
-       
-        public async Task<Speciality?> GetByIdSpecialityAsync(Guid id) {
-            return _specialities.SingleOrDefault(e => e.Id == id);
-        }
 
         public async Task<List<Speciality>> GetByAllSpecialityAsync()
         {
@@ -54,14 +50,19 @@ namespace Dsw2026Ej15.Data
             return _doctors.SingleOrDefault(e => e.Id == id);
         }
 
-        public void AddDoctor(Doctor doctor)
+        public async Task AddDoctor(Doctor doctor)
         {
             _doctors.Add(doctor);
         }
 
-        public void DeleteDoctor(Doctor doctor)
+        public async Task DeleteDoctor(Doctor doctor)
         {
             doctor.IsActive = false;
         }
-    }
+
+        public Task<Speciality?> GetByIdSpecialityAsync(Guid id)
+        {
+            return Task.FromResult(_specialities.SingleOrDefault(s => s.Id == id));
+        }
+    }   
 }

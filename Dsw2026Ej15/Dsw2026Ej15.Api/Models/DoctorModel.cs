@@ -1,4 +1,5 @@
-﻿namespace Dsw2026Ej15.Api.Models
+﻿using Dsw2026Ej15.Domain.Entities;
+namespace Dsw2026Ej15.Api.Models
 {
     public record DoctorModel
     {
