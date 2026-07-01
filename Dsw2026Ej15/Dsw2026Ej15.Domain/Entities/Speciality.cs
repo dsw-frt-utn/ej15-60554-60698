@@ -9,6 +9,7 @@ namespace Dsw2026Ej15.Domain.Entities
     {
         public string Name { get; set; }
         public string? Description { get; set; }
+        private Speciality() { }
         public Speciality(string name, string description) : base()
         {
             Name = name;

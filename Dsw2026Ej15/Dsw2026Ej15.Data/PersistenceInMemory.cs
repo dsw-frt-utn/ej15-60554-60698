@@ -64,5 +64,15 @@ namespace Dsw2026Ej15.Data
         {
             return Task.FromResult(_specialities.SingleOrDefault(s => s.Id == id));
         }
+
+        Task<IEnumerable<Speciality>> IPersistence.GetByAllSpecialityAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<IEnumerable<Doctor>> IPersistence.GetByAllDoctorsAsync()
+        {
+            throw new NotImplementedException();
+        }
     }   
 }
